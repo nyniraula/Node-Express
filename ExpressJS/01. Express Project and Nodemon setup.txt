@@ -1,0 +1,42 @@
+To create an Express server:
+
+1 -> create a project folder
+2 -> run pnpm init -y to initialize package.json and the project
+3 -> install package: express (pnpm add express)
+4 -> install package as devDependency: nodemon (pnpm add -D nodemon) (to basically watch for change in code and update the server (or else you would have to do it manually.))
+
+
+then we initialize a src folder with index.js(standard) in it.
+
+root
+    \ src
+        \ index.js
+
+
+we add scripts in package.json to run the dev server with nodemon.
+
+{
+    ...other stuff
+
+    scripts:{
+        ...,
+
+        "dev": "nodemon ./src/index.js", //so npm run dev works.
+        "start": "nodemon ./src/index.js"
+    }
+
+}
+
+sidenote: when we run npm run dev in a react project, the vite bundler already has a script in package.json for dev to run the app. Similarly we are defining that manually here, you could name it anything tbh.
+
+npm run (name) means to run a script defined in package.json
+
+
+
+Lastly, we set the import type in package.json for express project, Either CommonJS or module (esmodule). Use ES module ofc.
+
+{
+    ...,
+
+    "type": "module"
+}
