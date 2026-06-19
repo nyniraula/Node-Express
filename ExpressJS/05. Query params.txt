@@ -1,0 +1,83 @@
+Query Paramters:
+
+You might have seen a route / endpoint like this:
+
+somelink.com/route?key=value
+
+that ?key=value is a query Paramter.
+
+? defines the afterward thing coming is a query paramter.
+
+key and value are string
+
+so something like
+
+youtube.com/sidemen/videos?sort=popular
+
+
+You can even chain multiple query params with '&'
+
+youtube.com/sidemen/videos?sort=popular&order=ascending
+
+Here sort = popular and order = ascending are query params.
+
+
+So at basic query parameters are just a set of key value pair, to provide the sever extra info about how we want to something.
+
+
+---
+
+How do you access the query param as the server:
+
+The request callback param in the route has a property request.query
+
+Its an object with key value pair.
+
+
+So if you pass ?sort=ascending
+
+request.query is {sort: 'ascending'}
+
+
+for ?sort=ascending&filter=popular
+
+request.query is {sort:'ascending', filter:'popular'}
+
+
+When dealing with query params you have to handle three cases:
+
+first if either the query or params arent there (undefined.)
+=>just send the data regularly
+
+second if query and params are there, but its wrong
+=> either throw error or send data regularly
+
+third if query and params are correct
+=> modify data accordingly and send
+
+
+here is an example of a route with query params, that shows three conditions.
+
+app.get("/users", (request, response) => {
+  const { filter: qfilter, value } = request.query;
+
+  //check if query params arent there
+  if (!(qfilter && value && qfilter in users)) {
+    return response.send(users);
+  }
+
+  //when filter and value are present and correct
+  if (qfilter && value) {
+    return response.send(
+      users.filter((user) => {
+        return user[qfilter].toLowerCase().startsWith(value.toLowerCase());
+      }),
+    );
+  }
+});
+
+
+This demonstrates a user endpoint with optional query params filter and value, which decides if the filter property of users starts with that value (agent pls word it correctly)
+
+
+(Agent dont remove any comments on code and any useful thing that i noted specifically)

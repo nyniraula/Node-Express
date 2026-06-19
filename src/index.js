@@ -1,9 +1,5 @@
 import express from "express";
 
-const app = express();
-
-const PORT = process.env.PORT || 3000;
-
 const users = [
   { id: 1, name: "Alice Mercer", age: 28 },
   { id: 2, name: "James Okafor", age: 34 },
@@ -17,30 +13,55 @@ const users = [
   { id: 10, name: "Tom Whitfield", age: 45 },
 ];
 
-app.get("/", (req, res) => {
-  res.send("Nothing to see here");
+const PORT = process.env.PORT || 3000;
+
+const app = express();
+
+//base route
+app.get("/", (request, response) => {
+  response.send("The base rotue");
 });
 
-app.get("/users", (req, res) => {
-  res.send(users);
-});
+//users route
+app.get("/users", (request, response) => {
+  const { filter: qfilter, value } = request.query;
 
-app.get("/user/:id", (req, res) => {
-  const parsedId = parseInt(req.params.id);
-
-  if (isNaN(parsedId)) {
-    return res.status(400).send({ msg: "Bad Request. Invalid Id." });
+  //check if query params arent there
+  if (!(qfilter && value && qfilter in users)) {
+    return response.send(users);
   }
 
-  const findUser = users.find((el) => el.id == parsedId);
+  //when filter and value are present and correct
+  if (qfilter && value) {
+    return response.send(
+      users.filter((user) => {
+        return user[qfilter].toLowerCase().startsWith(value.toLowerCase());
+      }),
+    );
+  }
+});
 
-  if (!findUser) return res.sendStatus(404);
+//user/id route
+app.get("/user/:id", (request, response) => {
+  const parsedId = parseInt(request.params.id);
 
-  return res.send(findUser);
+  //handle invalid ID
+  if (isNaN(parsedId)) {
+    return response.sendStatus(400);
+  }
+
+  const findUser = users.find((el) => el.id === parsedId);
+
+  //handle id out of range
+  if (!findUser) {
+    return response.sendStatus(404);
+  }
+
+  return response.send(findUser);
 });
 
 app.listen(PORT, () => {
   console.log(
-    `${new Date().toISOString()}: Server Started, Running on PORT ${PORT}`,
+    `LOG: ${new Date().toISOString()} >> Sever Started. Running at Port ${PORT}`,
   );
 });
