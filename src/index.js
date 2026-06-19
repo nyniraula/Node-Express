@@ -17,6 +17,8 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 
+app.use(express.json());
+
 //base route
 app.get("/", (request, response) => {
   response.send("The base rotue");
@@ -41,6 +43,15 @@ app.get("/users", (request, response) => {
   }
 });
 
+app.post("/users", (request, response) => {
+  const userData = request.body;
+
+  const newUser = { id: users.length + 1, ...userData };
+  users.push(newUser);
+
+  response.status(201).send(users);
+});
+
 //user/id route
 app.get("/user/:id", (request, response) => {
   const parsedId = parseInt(request.params.id);
@@ -62,6 +73,6 @@ app.get("/user/:id", (request, response) => {
 
 app.listen(PORT, () => {
   console.log(
-    `LOG: ${new Date().toISOString()} >> Sever Started. Running at Port ${PORT}`,
+    `LOG: ${new Date().toISOString()} >> Sever Started. Running at Port ${PORT}. Link: http://localhost:3000/`,
   );
 });

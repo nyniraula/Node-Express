@@ -1,0 +1,51 @@
+POST Request:
+
+a http request, where the client sends some data to the server.
+
+Suppose a form, on btn click, the form data is sent to the server.
+
+
+The data we send is called a request body or a payload. (Standard terms).
+
+
+To send a post request, the server needs to have a post route.
+
+How to create a post route:
+
+app.post(route, callback fn) just like app.get()
+
+
+
+A post route can be the same as an exisitng get route, the http request type is different, so a /users get route can exits and also a /users post route.
+
+
+app.post('/users', (request, response)=>{
+    const payload = request.body
+})
+
+Tho, this isnt sufficient, you need a middleware to parse the raw data into json or another format.
+
+at the top after const app = express()
+
+add app.use(express.json())
+
+This just means, any request that comes with header content-type = application/json, express will auto parse it into js object.
+
+Thats it (middleware are later topic.)
+
+
+
+so a post request does something like:
+
+get the new data.
+add it to a db or forward to some external api source.
+Return status code 201 (Created) if all went ok or even return the new data.
+
+app.post("/users", (request, response) => {
+  const userData = request.body;
+
+  const newUser = { id: users.length + 1, ...userData };
+  users.push(newUser);
+
+  response.status(201).send(users);
+});
