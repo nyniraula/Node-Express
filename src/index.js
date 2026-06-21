@@ -43,6 +43,7 @@ app.get("/users", (request, response) => {
   }
 });
 
+//post route
 app.post("/users", (request, response) => {
   const userData = request.body;
 
@@ -50,6 +51,27 @@ app.post("/users", (request, response) => {
   users.push(newUser);
 
   response.status(201).send(users);
+});
+
+//put request
+app.put("/user/:id", (request, response) => {
+  const parsedId = parseInt(request.params.id);
+  const data = request.body;
+
+  //handle invalid ID
+  if (isNaN(parsedId)) {
+    return response.sendStatus(400);
+  }
+
+  const findUserIdx = users.findIndex((user) => user.id === id);
+
+  if (findUserIdx < 0) {
+    return response.sendStatus(404);
+  }
+
+  users[findUserIdx] = data;
+
+  return response.send(users[findUserIdx]);
 });
 
 //user/id route
