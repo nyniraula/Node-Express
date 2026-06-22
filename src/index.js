@@ -1,17 +1,15 @@
 import express from "express";
+import { readFile, writeFile } from "node:fs/promises";
 
-const users = [
-  { id: 1, name: "Alice Mercer", age: 28 },
-  { id: 2, name: "James Okafor", age: 34 },
-  { id: 3, name: "Priya Nair", age: 22 },
-  { id: 4, name: "Carlos Vega", age: 41 },
-  { id: 5, name: "Sophie Blanchard", age: 19 },
-  { id: 6, name: "Ethan Rowan", age: 27 },
-  { id: 7, name: "Yuna Choi", age: 31 },
-  { id: 8, name: "Marcus Hill", age: 25 },
-  { id: 9, name: "Leila Nazari", age: 38 },
-  { id: 10, name: "Tom Whitfield", age: 45 },
-];
+const readDB = async () => {
+  const rawData = await readFile("./users.json", "utf-8");
+  const data = JSON.parse(rawData);
+  return data;
+};
+
+const writeDB = async (data) => {
+  await writeFile("./users.json", JSON.stringify(data, null, 2));
+};
 
 const PORT = process.env.PORT || 3000;
 
@@ -25,7 +23,9 @@ app.get("/", (request, response) => {
 });
 
 //users route
-app.get("/users", (request, response) => {
+app.get("/users", async (request, response) => {
+  const users = await readDB();
+
   const { filter: qfilter, value } = request.query;
 
   //check if query params arent there
@@ -44,17 +44,20 @@ app.get("/users", (request, response) => {
 });
 
 //post route
-app.post("/users", (request, response) => {
+app.post("/users", async (request, response) => {
   const userData = request.body;
 
   const newUser = { id: users.length + 1, ...userData };
+
+  const users = await readDB();
   users.push(newUser);
+  writeDB(users);
 
   response.status(201).send(users);
 });
 
 //put request
-app.put("/user/:id", (request, response) => {
+app.put("/user/:id", async (request, response) => {
   const parsedId = parseInt(request.params.id);
   const data = request.body;
 
@@ -63,25 +66,50 @@ app.put("/user/:id", (request, response) => {
     return response.sendStatus(400);
   }
 
-  const findUserIdx = users.findIndex((user) => user.id === id);
+  const users = await readDB();
+
+  const findUserIdx = users.findIndex((user) => user.id === parsedId);
 
   if (findUserIdx < 0) {
     return response.sendStatus(404);
   }
 
   users[findUserIdx] = data;
+  await writeDB(users);
 
-  return response.send(users[findUserIdx]);
+  console.log(users);
+  return response.send(users);
+});
+
+app.patch("/user/:id", async (request, response) => {
+  const body = request.body;
+  const parsedId = parseInt(request.params.id);
+
+  if (isNaN(parsedId)) return response.sendStatus(400);
+
+  const users = await readDB();
+
+  const userIdx = users.findIndex((user) => user.id === parsedId);
+
+  if (userIdx === -1) return response.sendStatus(404);
+
+  users[userIdx] = { ...users[userIdx], ...body };
+
+  await writeDB(users);
+
+  return response.send(users[userIdx]);
 });
 
 //user/id route
-app.get("/user/:id", (request, response) => {
+app.get("/user/:id", async (request, response) => {
   const parsedId = parseInt(request.params.id);
 
   //handle invalid ID
   if (isNaN(parsedId)) {
     return response.sendStatus(400);
   }
+
+  const users = await readDB();
 
   const findUser = users.find((el) => el.id === parsedId);
 

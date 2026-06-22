@@ -1,0 +1,28 @@
+PATCH request:
+
+PATCH Http method is used when you want to update partial field (one or more but limited) of a record, not replace the record data as whole but rather update a specific filed of that record.
+
+similar to other methods, route is defined like this:
+
+app.patch("/user/:id", async (request, response) => {
+  const body = request.body;
+  const parsedId = parseInt(request.params.id);
+
+  if (isNaN(parsedId)) return response.sendStatus(400);
+
+  const users = await readDB();
+
+  const userIdx = users.findIndex((user) => user.id === parsedId);
+
+  if (userIdx === -1) return response.sendStatus(404);
+
+  users[userIdx] = { ...users[userIdx], ...body };
+
+  await writeDB(users);
+
+  return response.send(users[userIdx]);
+});
+
+Use it when you want to update speicific field.
+
+As show above, we are first rewriting the old data with ...users[userIdx] and then adding new data ...body, any new data will overwrite old fields
