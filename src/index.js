@@ -121,6 +121,25 @@ app.get("/user/:id", async (request, response) => {
   return response.send(findUser);
 });
 
+app.delete("/user/:id", async (request, response) => {
+  const parsedId = parseInt(request.params.id);
+
+  if (isNaN(parsedId)) return response.sendStatus(400);
+
+  const users = await readDB();
+
+  const userIdx = users.findIndex((user) => user.id === parsedId);
+
+  if (userIdx === -1) return response.sendStatus(404);
+
+  //remove that idx record
+  users.splice(userIdx, 1);
+
+  await writeDB(users);
+
+  return response.send(users);
+});
+
 app.listen(PORT, () => {
   console.log(
     `LOG: ${new Date().toISOString()} >> Sever Started. Running at Port ${PORT}. Link: http://localhost:3000/`,
