@@ -45,7 +45,8 @@ app.use(express.json());
 
 //base route
 app.get("/", (request, response) => {
-  response.send("The base rotue");
+  console.log(request.ips);
+  return response.send("The base rotue");
 });
 
 //users route
