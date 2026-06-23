@@ -1,6 +1,8 @@
 import express from "express";
 import { readFile, writeFile } from "node:fs/promises";
+import { parse } from "node:path";
 
+//db helper functions.
 const readDB = async () => {
   const rawData = await readFile("./users.json", "utf-8");
   const data = JSON.parse(rawData);
@@ -11,9 +13,33 @@ const writeDB = async (data) => {
   await writeFile("./users.json", JSON.stringify(data, null, 2));
 };
 
+//Middleware
+const resolveUserIdxById = async (request, response, next) => {
+  const parsedId = parseInt(request.params.id);
+
+  //Bad Request
+  if (isNaN(parsedId)) return response.sendStatus(400);
+
+  const users = await readDB();
+
+  const userIdx = users.findIndex((el) => el.id === parsedId);
+
+  //Not found
+  if (userIdx === -1) return response.sendStatus(404);
+
+  request.userIdx = userIdx;
+
+  next();
+};
+
 const PORT = process.env.PORT || 3000;
 
 const app = express();
+
+const logRouteInfo = (request, response, next) => {
+  console.log(`Middleware LOG: ${request.method} - ${request.url}`);
+  next();
+};
 
 app.use(express.json());
 
@@ -43,62 +69,7 @@ app.get("/users", async (request, response) => {
   }
 });
 
-//post route
-app.post("/users", async (request, response) => {
-  const userData = request.body;
-
-  const newUser = { id: users.length + 1, ...userData };
-
-  const users = await readDB();
-  users.push(newUser);
-  writeDB(users);
-
-  response.status(201).send(users);
-});
-
-//put request
-app.put("/user/:id", async (request, response) => {
-  const parsedId = parseInt(request.params.id);
-  const data = request.body;
-
-  //handle invalid ID
-  if (isNaN(parsedId)) {
-    return response.sendStatus(400);
-  }
-
-  const users = await readDB();
-
-  const findUserIdx = users.findIndex((user) => user.id === parsedId);
-
-  if (findUserIdx < 0) {
-    return response.sendStatus(404);
-  }
-
-  users[findUserIdx] = data;
-  await writeDB(users);
-
-  console.log(users);
-  return response.send(users);
-});
-
-app.patch("/user/:id", async (request, response) => {
-  const body = request.body;
-  const parsedId = parseInt(request.params.id);
-
-  if (isNaN(parsedId)) return response.sendStatus(400);
-
-  const users = await readDB();
-
-  const userIdx = users.findIndex((user) => user.id === parsedId);
-
-  if (userIdx === -1) return response.sendStatus(404);
-
-  users[userIdx] = { ...users[userIdx], ...body };
-
-  await writeDB(users);
-
-  return response.send(users[userIdx]);
-});
+app.use(logRouteInfo);
 
 //user/id route
 app.get("/user/:id", async (request, response) => {
@@ -121,17 +92,46 @@ app.get("/user/:id", async (request, response) => {
   return response.send(findUser);
 });
 
-app.delete("/user/:id", async (request, response) => {
-  const parsedId = parseInt(request.params.id);
+//post route
+app.post("/users", async (request, response) => {
+  const userData = request.body;
 
-  if (isNaN(parsedId)) return response.sendStatus(400);
+  const newUser = { id: users.length + 1, ...userData };
 
   const users = await readDB();
+  users.push(newUser);
+  writeDB(users);
 
-  const userIdx = users.findIndex((user) => user.id === parsedId);
+  response.status(201).send(users);
+});
 
-  if (userIdx === -1) return response.sendStatus(404);
+//put request
+app.put("/user/:id", resolveUserIdxById, async (request, response) => {
+  const { userIdx, body } = request;
+  const users = await readDB();
 
+  users[findUserIdx] = data;
+  await writeDB(users);
+
+  console.log(users);
+  return response.send(users);
+});
+
+app.patch("/user/:id", resolveUserIdxById, async (request, response) => {
+  const { userIdx, body } = request;
+  const users = await readDB();
+
+  users[userIdx] = { ...users[userIdx], ...body };
+
+  await writeDB(users);
+
+  return response.send(users[userIdx]);
+});
+
+app.delete("/user/:id", resolveUserIdxById, async (request, response) => {
+  const { userIdx, body } = request;
+
+  const users = await readDB();
   //remove that idx record
   users.splice(userIdx, 1);
 
